@@ -1,0 +1,66 @@
+ARG BASEIMAGE
+FROM ${BASEIMAGE}
+
+RUN yum install -y \
+        ca-certificates \
+        wget \
+        git \
+        rpm-build \
+        make && \
+    rm -rf /var/cache/yum/*
+
+ARG GOLANG_VERSION=0.0.0
+RUN set -eux; \
+    \
+    arch="$(uname -m)"; \
+    case "${arch##*-}" in \
+        x86_64 | amd64) ARCH='amd64' ;; \
+        ppc64el | ppc64le) ARCH='ppc64le' ;; \
+        aarch64) ARCH='arm64' ;; \
+        *) echo "unsupported architecture"; exit 1 ;; \
+    esac; \
+    wget -nv -O - https://storage.googleapis.com/golang/go${GOLANG_VERSION}.linux-${ARCH}.tar.gz \
+    | tar -C /usr/local -xz
+
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+
+RUN go get -u golang.org/x/lint/golint github.com/gordonklaus/ineffassign
+
+
+RUN yum install -y curl
+
+WORKDIR $GOPATH/src/gitlab.com/habana/container-toolkit/habana-container-runtime
+RUN mkdir -p ${GOPATH}/bin
+
+RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh 
+
+COPY src .
+RUN make build
+
+# packaging
+ARG PKG_VERS
+ARG PKG_REV
+ARG TOOLKIT_VERSION
+
+ENV VERSION $PKG_VERS
+ENV RELEASE $PKG_REV
+ENV TOOLKIT_VERSION $TOOLKIT_VERSION
+
+# output directory
+ENV DIST_DIR=/tmp/habana-container-runtime-$PKG_VERS/SOURCES
+RUN mkdir -p $DIST_DIR /dist
+
+RUN mv habana-container-runtime $DIST_DIR/habana-container-runtime
+
+WORKDIR $DIST_DIR/..
+COPY rpm .
+
+CMD arch=$(uname -m) && \
+    rpmbuild --clean --target=$arch -bb \
+             -D "_topdir $PWD" \
+             -D "version $VERSION" \
+             -D "release $RELEASE" \
+             -D "toolkit_version $TOOLKIT_VERSION" \
+             SPECS/habana-container-runtime.spec && \
+    mv RPMS/$arch/*.rpm /dist

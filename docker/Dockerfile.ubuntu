@@ -1,0 +1,72 @@
+ARG BASEIMAGE
+FROM ${BASEIMAGE}
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        wget \
+        ca-certificates \
+        git \
+        build-essential \
+        dh-make \
+        fakeroot \
+        devscripts \
+        lsb-release && \
+    rm -rf /var/lib/apt/lists/*
+
+ARG GOLANG_VERSION=0.0.0
+RUN set -eux; \
+    \
+    arch="$(uname -m)"; \
+    case "${arch##*-}" in \
+        x86_64 | amd64) ARCH='amd64' ;; \
+        ppc64el | ppc64le) ARCH='ppc64le' ;; \
+        aarch64) ARCH='arm64' ;; \
+        *) echo "unsupported architecture" ; exit 1 ;; \
+    esac; \
+    wget -nv -O - https://storage.googleapis.com/golang/go${GOLANG_VERSION}.linux-${ARCH}.tar.gz \
+    | tar -C /usr/local -xz
+
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+
+RUN go get -u golang.org/x/lint/golint github.com/gordonklaus/ineffassign
+
+
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR $GOPATH/src/gitlab.com/habana/container-toolkit/habana-container-runtime
+RUN mkdir -p ${GOPATH}/bin
+
+RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+
+COPY src .
+RUN make build
+
+# packaging
+ARG PKG_VERS
+ARG PKG_REV
+ARG TOOLKIT_VERSION
+
+ENV DEBFULLNAME "Habana Labs"
+ENV REVISION "$PKG_VERS-$PKG_REV"
+ENV TOOLKIT_VERSION $TOOLKIT_VERSION
+ENV SECTION ""
+
+# output directory
+ENV DIST_DIR=/tmp/habana-container-runtime-$PKG_VERS
+RUN mkdir -p $DIST_DIR /dist
+
+RUN mv habana-container-runtime $DIST_DIR/habana-container-runtime
+
+WORKDIR $DIST_DIR
+COPY debian ./debian
+
+RUN sed -i "s;@VERSION@;${REVISION};" debian/changelog && \
+    sed -i "s;@TOOLKIT_VERSION@;${TOOLKIT_VERSION};" debian/control && \
+    if [ "$REVISION" != "$(dpkg-parsechangelog --show-field=Version)" ]; then exit 1; fi
+
+CMD export DISTRIB="$(lsb_release -cs)" && \
+    debuild -eREVISION -eDISTRIB -eSECTION --dpkg-buildpackage-hook='sh debian/prepare' -i -us -uc -b && \
+    mv /tmp/*.deb /dist

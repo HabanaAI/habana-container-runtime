@@ -1,0 +1,13 @@
+Source: habana-container-runtime
+Section: @SECTION@utils
+Priority: optional
+Maintainer: Habana Labs
+Standards-Version: 0.0.1
+Homepage: https://github.com/HabanaAI/habana-container-runtime
+Build-Depends: debhelper (>= 9)
+
+Package: habana-container-runtime
+Architecture: any
+Description: HABANA container runtime
+ Provides a modified version of runc allowing users to run GAUDI enabled
+ containers.
