@@ -36,7 +36,7 @@ RUN apt-get update && \
     apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR $GOPATH/src/gitlab.com/habana/container-toolkit/habana-container-runtime
+WORKDIR $GOPATH/src/github.com/HabanaAI/habana-container-runtime
 RUN mkdir -p ${GOPATH}/bin
 
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh

@@ -8,7 +8,7 @@ If environment variable `HABANA_VISIBLE_DEVICES` is set in the OCI spec, the hoo
 Currently habana-container-runtime has to be used with habana-container-hook and libhabana-container
 Bellow is the case when host machine has 8 Habana devices and mount `all` by HABANA_VISIBLE_DEVICES=all
 ```bash
-docker run --rm --runtime=habana -e HABANA_VISIBLE_DEVICES=all ubuntu:18.04 ls /dev/hl*
+docker run --rm --runtime=habana -e HABANA_VISIBLE_DEVICES=all ubuntu:18.04 /bin/bash -c "ls /dev/hl*"
 /dev/hl0
 /dev/hl1
 /dev/hl2
@@ -40,7 +40,10 @@ dpkg -i dist/ubuntu18.04/amd64/*.deb
 #### CentOS and Amazon linux distributions
 ```
 make docker-x86_64
+# amazonlinux2
 yum install dist/amazonlinux2/x86_64/*.rpm
+# centos8
+yum install dist/centos8/x86_64/*.rpm
 ```
 
 ### Install pre-built package

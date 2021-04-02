@@ -13,7 +13,7 @@ GOLANG_VERSION  := 1.14.3
 
 # Supported OSs by architecture
 AMD64_TARGETS := ubuntu20.04 ubuntu18.04
-X86_64_TARGETS := amazonlinux1 amazonlinux2
+X86_64_TARGETS := centos7 centos8 rhel7 rhel8 amazonlinux1 amazonlinux2
 
 # amd64 targets
 AMD64_TARGETS := $(patsubst %, %-amd64, $(AMD64_TARGETS))
@@ -41,7 +41,12 @@ docker-x86_64: $(X86_64_TARGETS)
 
 # private OS targets with defaults
 --ubuntu%: OS := ubuntu
+--centos%: OS := centos
 --amazonlinux%: OS := amazonlinux
+
+--rhel%: OS := centos
+--rhel%: VERSION = $(patsubst rhel%-$(ARCH),%,$(TARGET_PLATFORM))
+--rhel%: ARTIFACTS_DIR = $(DIST_DIR)/rhel$(VERSION)/$(ARCH)
 
 docker-build-%:
 	@echo "Building for $(TARGET_PLATFORM)"
