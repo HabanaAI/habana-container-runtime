@@ -1,0 +1,2 @@
+[habana-container-runtime]
+debug = "/tmp/runtime-test"
