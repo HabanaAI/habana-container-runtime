@@ -1,4 +1,4 @@
-module habana-container-runtime
+module github.com/HabanaAI/habana-container-runtime
 
 go 1.21
 
