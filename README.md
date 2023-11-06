@@ -3,30 +3,6 @@
 A modified version of [runc](https://github.com/opencontainers/runc) adding a custom [pre-start hook](https://github.com/HabanaAI/habana-container-hook) to all containers
 If environment variable `HABANA_VISIBLE_DEVICES` is set in the OCI spec, the hook will configure Habana device access for the container by leveraging `habana-container-cli` from project [libhabana-container](https://github.com/HabanaAI/libhabana-container).
 
-## Usage example
-
-Currently habana-container-runtime has to be used with habana-container-hook and libhabana-container
-Bellow is the case when host machine has 8 Habana devices and mount `all` by HABANA_VISIBLE_DEVICES=all
-```bash
-docker run --rm --runtime=habana -e HABANA_VISIBLE_DEVICES=all ubuntu:18.04 /bin/bash -c "ls /dev/hl*"
-/dev/hl0
-/dev/hl1
-/dev/hl2
-/dev/hl3
-/dev/hl4
-/dev/hl5
-/dev/hl6
-/dev/hl7
-/dev/hl_controlD0
-/dev/hl_controlD1
-/dev/hl_controlD2
-/dev/hl_controlD3
-/dev/hl_controlD4
-/dev/hl_controlD5
-/dev/hl_controlD6
-/dev/hl_controlD7
-```
-
 ## Installation
 
 ### Build from source
@@ -63,11 +39,10 @@ sudo dpkg -i habana-container-runtime.deb
 sudo yum install habana-container-runtime.rpm
 ```
 
-
-## Docker Engine setup
-
 To register the `habana` runtime, use the method below that is best suited to your environment.
 You might need to merge the new argument with your existing configuration.
+
+## Docker Engine setup
 
 #### Daemon configuration file
 ```bash
@@ -88,6 +63,31 @@ You can optionally reconfigure the default runtime by adding the following to `/
 ```
 "default-runtime": "habana"
 ```
+### Usage example
+
+
+Currently habana-container-runtime has to be used with habana-container-hook and libhabana-container
+Bellow is the case when host machine has 8 Habana devices and mount `all` by HABANA_VISIBLE_DEVICES=all
+```bash
+docker run --rm --runtime=habana -e HABANA_VISIBLE_DEVICES=all ubuntu:18.04 /bin/bash -c "ls /dev/accel/*"
+
+/dev/accel/accel0
+/dev/accel/accel1
+/dev/accel/accel2
+/dev/accel/accel3
+/dev/accel/accel4
+/dev/accel/accel5
+/dev/accel/accel6
+/dev/accel/accel7
+/dev/accel/accel_controlD0
+/dev/accel/accel_controlD1
+/dev/accel/accel_controlD2
+/dev/accel/accel_controlD3
+/dev/accel/accel_controlD4
+/dev/accel/accel_controlD5
+/dev/accel/accel_controlD6
+/dev/accel/accel_controlD7
+```
 
 
 #### Command line
@@ -105,6 +105,29 @@ This variable controls which Habana devices will be made accessible inside the c
 #### Possible values
 * `0,1,2` …: a comma-separated list of index(es).
 * `all`: all Habana devices will be accessible, this is the default value in our container images.
+
+## ContainerD
+
+#### Containerd configuration file
+```bash
+sudo tee /etc/containerd/config.toml <<EOF
+disabled_plugins = []
+version = 2
+
+[plugins]
+  [plugins."io.containerd.grpc.v1.cri"]
+    [plugins."io.containerd.grpc.v1.cri".containerd]
+      default_runtime_name = "habana"
+      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
+        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.habana]
+          runtime_type = "io.containerd.runc.v2"
+          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.habana.options]
+            BinaryName = "/usr/bin/habana-container-runtime"
+  [plugins."io.containerd.runtime.v1.linux"]
+    runtime = "habana-container-runtime"
+EOF
+sudo systemctl restart containerd
+```
 
 ## Issues and Contributing
 

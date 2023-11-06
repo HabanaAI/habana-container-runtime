@@ -1,0 +1,90 @@
+name: CI Checks
+
+on:
+  pull_request:
+    branches:
+    - main
+  push:
+    branches:
+      - main
+
+# Fix 'Too many retries issue with release action'
+permissions:
+  contents: write
+
+jobs:
+  test:
+    needs:
+    - format-check
+    - lint
+    name: Test Application
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v4
+      with:
+        go-version: ^1.21
+    - name: Checkout code into Go module directory
+      uses: actions/checkout@v4
+    - name: Downloads
+      run: go get -t ./...
+    - name: Run Test
+      run: make test
+    - name: Coverage check
+      run: make coverage
+    - name: Generate report
+      run: make report
+    - name: Copy Files
+      run: |
+        mkdir reports
+        cp cover.html reports/.
+    - name: Archive
+      uses: actions/upload-artifact@v3
+      with:
+        name: reports
+        path: reports
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        cache: false
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.54
+
+  format-check:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v4
+      with:
+        go-version: ^1.21
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+    - name: Run Format check
+      run: make check-format
+    - name: Vet
+      run: go vet ./...
+
+  build:
+    name: Build App
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v4
+        with:
+          go-version: ^1.21
+
+      - name: Checkout code into the go module directory
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: make build
