@@ -1,0 +1,12 @@
+mount_accelerators = true
+mount_uverbs = true
+
+[network-layer-routes]
+path = "/tmp/testdata.json"
+
+[habana-container-runtime]
+visible_devices_all_as_default = false
+mode = "legacy"
+debug = "/tmp/runtime-test"
+systemd_cgroup = true
+log_level = "debug"

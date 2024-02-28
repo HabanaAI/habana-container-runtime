@@ -8,29 +8,61 @@ MKDIR  ?= mkdir
 DIST_DIR ?= $(CURDIR)/dist
 LOCAL_REGISTRY ?= ""
 
-LIB_NAME := habana-container-runtime
+RUNTIME_BINARY := habana-container-runtime
+HOOK_BINARY := habana-container-hook
+CLI_BINARY := habana-container-cli
+
 LIB_VERSION := 0.0.1
 PKG_REV := 1
 
 TOOLKIT_VERSION := 1.3.0
-GOLANG_VERSION  := 1.21
+GOLANG_VERSION  := 1.21.0
 
 # Go CI related commands
-build:
-	@go build  -o ${LIB_NAME}
+build: clean build-runtime build-hook build-cli
+
+build-runtime:
+	@echo "Building $(RUNTIME_BINARY)"
+	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/${RUNTIME_BINARY}_linux_amd64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
+	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/${RUNTIME_BINARY}_linux_386/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
+	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/${RUNTIME_BINARY}_linux_arm64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
+
+build-hook:
+	@echo "Building $(HOOK_BINARY)"
+	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/${HOOK_BINARY}_linux_amd64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
+	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/${HOOK_BINARY}_linux_386/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
+	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/${HOOK_BINARY}_linux_arm64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
+
+build-cli:
+	@echo "Building $(CLI_BINARY)"
+	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/${CLI_BINARY}_linux_amd64/${CLI_BINARY} ./cmd/habana-container-cli/
+	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/${CLI_BINARY}_linux_386/${CLI_BINARY} ./cmd/habana-container-cli/
+	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/${CLI_BINARY}_linux_arm64/${CLI_BINARY} ./cmd/habana-container-cli/
+
+clean:
+	go clean > /dev/null
+	rm -rf dist/*
 
 test:
-	cd src/ && go test ./... -coverprofile=coverage.out
+	@go test ./... -coverprofile=coverage.out
 
 coverage:
-	go tool cover -func coverate.out | grep "total": | awk '{print ((int$$3) > 80) != 1}'
+	@go tool cover -func coverage.out | grep "total:" | awk '{print  ((int($$3) > 80) != 1)}'
 
 check-format:
-	test -z $$(go fmt ./src/...)
+	@test -z $$(go fmt ./...)
 
-static-check:
-	@cd src/ && \
-	golangci-lint run ./...
+lint:
+	@golangci-lint run ./...
+
+tidy:
+	@go mod tidy && go mod vendor
+
+packages: build
+	mkdir -p dist/deb
+	mkdir -p dist/rpm
+	nfpm package --packager deb --target ./dist/deb/
+	nfpm package --packager rpm --target ./dist/rpm/
 
 #######################################
 
@@ -56,7 +88,7 @@ docker-x86_64: $(X86_64_TARGETS)
 --%: VERSION = $(patsubst $(OS)%-$(ARCH),%,$(TARGET_PLATFORM))
 --%: BASEIMAGE = $(OS):$(VERSION)
 
---%: BUILDIMAGE = habana/$(LIB_NAME)/$(OS)$(VERSION)-$(ARCH)
+--%: BUILDIMAGE = habana/$(BINARY_NAME)/$(OS)$(VERSION)-$(ARCH)
 --%: DOCKERFILE = $(CURDIR)/docker/Dockerfile.$(OS)
 --%: ARTIFACTS_DIR = $(DIST_DIR)/$(OS)$(VERSION)/$(ARCH)
 --%: docker-build-%

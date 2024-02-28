@@ -1,0 +1,48 @@
+disable-require = false
+#accept-habana-visible-devices-envvar-when-unprivileged = true
+#accept-habana-visible-devices-as-volume-mounts = false
+
+## Uncomment and set to false if you are running inside kubernetes
+## environment with Habana device plugin. Defaults to true
+#mount_accelerators = false
+
+## Mount uverbs mounts the attached infiniband_verb device attached to
+## the selected accelerator devices. Defaults to true.
+#mount_uverbs = false
+
+## [Optional section]
+[network-layer-routes]
+## Override the default path on hode for the network configuration layer.
+## default:/etc/habanalabs/gaudinet.json
+# path = /etc/habanalabs/gaudinet.json
+
+[habana-container-cli]
+#root = "/run/habana/driver"
+#path = "/usr/bin/habana-container-cli"
+environment = []
+
+## Uncomment to enable logging
+#debug = "/var/log/habana-container-hook.log"
+
+
+[habana-container-runtime]
+
+## Always try to expose devices on any container, no matter if requested the devices
+## This is not recommended as it exposes devices and required metadata into any container
+## Default: true
+#visible_devices_all_as_default = false
+
+## Uncomment to enable logging
+#debug = "/var/log/habana-container-runtime.log"
+
+## Logging level. Supported values: "info", "debug"
+#log_level = "debug"
+
+## By default, runc creates cgroups and sets cgroup limits on its own (this mode is known as fs cgroup driver).
+## By setting to true runc switches to systemd cgroup driver.
+## Read more here: https://github.com/opencontainers/runc/blob/main/docs/systemd.md
+#systemd_cgroup = false
+
+## Use prestart hook for configuration. Valid modes: oci, legacy
+## Default: oci
+# mode = legacy

@@ -1,7 +1,30 @@
-# habana-container-runtime
+# Habana-Container-Runtime
 
 A modified version of [runc](https://github.com/opencontainers/runc) adding a custom [pre-start hook](https://github.com/HabanaAI/habana-container-hook) to all containers
 If environment variable `HABANA_VISIBLE_DEVICES` is set in the OCI spec, the hook will configure Habana device access for the container by leveraging `habana-container-cli` from project [libhabana-container](https://github.com/HabanaAI/libhabana-container).
+
+- [Habana-Container-Runtime](#habana-container-runtime)
+  - [Installation](#installation)
+    - [Build from source](#build-from-source)
+      - [Ubuntu distributions](#ubuntu-distributions)
+      - [CentOS and Amazon linux distributions](#centos-and-amazon-linux-distributions)
+    - [Install pre-built package](#install-pre-built-package)
+      - [Ubuntu distributions](#ubuntu-distributions-1)
+      - [CentOS and Amazon linux distributions](#centos-and-amazon-linux-distributions-1)
+  - [Docker Engine setup](#docker-engine-setup)
+      - [Daemon configuration file](#daemon-configuration-file)
+    - [Usage example](#usage-example)
+      - [Command line](#command-line)
+  - [Environment variables (OCI spec)](#environment-variables-oci-spec)
+    - [`HABANA_VISIBLE_DEVICES`](#habana_visible_devices)
+      - [Possible values](#possible-values)
+    - [`HABANA_VISIBLE_MODULES` **Auto generated**](#habana_visible_modules-auto-generated)
+    - [`HABANA_RUNTIME_ERROR` **Auto generated**](#habana_runtime_error-auto-generated)
+  - [ContainerD](#containerd)
+      - [Containerd configuration file](#containerd-configuration-file)
+  - [Full Config Options](#full-config-options)
+  - [Issues and Contributing](#issues-and-contributing)
+
 
 ## Installation
 
@@ -69,7 +92,7 @@ You can optionally reconfigure the default runtime by adding the following to `/
 Currently habana-container-runtime has to be used with habana-container-hook and libhabana-container
 Bellow is the case when host machine has 8 Habana devices and mount `all` by HABANA_VISIBLE_DEVICES=all
 ```bash
-docker run --rm --runtime=habana -e HABANA_VISIBLE_DEVICES=all ubuntu:18.04 /bin/bash -c "ls /dev/accel/*"
+docker run --rm --runtime=habana -e HABANA_VISIBLE_DEVICES=all ubuntu:22.04 /bin/bash -c "ls /dev/accel/*"
 
 /dev/accel/accel0
 /dev/accel/accel1
@@ -106,6 +129,14 @@ This variable controls which Habana devices will be made accessible inside the c
 * `0,1,2` …: a comma-separated list of index(es).
 * `all`: all Habana devices will be accessible, this is the default value in our container images.
 
+### `HABANA_VISIBLE_MODULES` **Auto generated**
+The variable hold the devices modules ID in the matching order of HABANA_VISIBLE_DEVICES.
+* Values: `0,1,2`
+
+### `HABANA_RUNTIME_ERROR` **Auto generated**
+Variable hold the last error from the runtime flow. The runtime
+does not fail the pod creation in most cases, so we propagate the error inside the container for debugging purposes.
+
 ## ContainerD
 
 #### Containerd configuration file
@@ -127,6 +158,60 @@ version = 2
     runtime = "habana-container-runtime"
 EOF
 sudo systemctl restart containerd
+```
+
+## Full Config Options
+Config file is located at: `/etc/habanalabs-container-runtime/config.toml`
+```toml
+disable-require = false
+#accept-habana-visible-devices-envvar-when-unprivileged = true
+#accept-habana-visible-devices-as-volume-mounts = false
+
+## Uncomment and set to false if you are running inside kubernetes
+## environment with Habana device plugin. Defaults to true
+#mount_accelerators = false
+
+## Mount uverbs mounts the attached infiniband_verb device attached to
+## the selected accelerator devices. Defaults to true.
+#mount_uverbs = false
+
+## [Optional section]
+#[network-layer-routes]
+## Override the default path on hode for the network configuration layer.
+## default:/etc/habanalabs/gaudinet.json
+# path = /etc/habanalabs/gaudinet.json
+
+[habana-container-cli]
+#root = "/run/habana/driver"
+#path = "/usr/bin/habana-container-cli"
+environment = []
+
+## Uncomment to enable logging
+#debug = "/var/log/habana-container-hook.log"
+
+
+[habana-container-runtime]
+
+## Always try to expose devices on any container, no matter if requested the devices
+## This is not recommended as it exposes devices and required metadata into any container
+## Default: true
+#visible_devices_all_as_default = false
+
+## Uncomment to enable logging
+#debug = "/var/log/habana-container-runtime.log"
+
+## Logging level. Supported values: "info", "debug"
+#log_level = "debug"
+
+## By default, runc creates cgroups and sets cgroup limits on its own (this mode is known as fs cgroup driver).
+## By setting to true runc switches to systemd cgroup driver.
+## Read more here: https://github.com/opencontainers/runc/blob/main/docs/systemd.md
+#systemd_cgroup = false
+
+## Use prestart hook for configuration. Valid modes: oci, legacy
+## Default: oci
+# mode = legacy
+
 ```
 
 ## Issues and Contributing
