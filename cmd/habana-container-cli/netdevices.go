@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net"
 	"os/exec"
+	"syscall"
 
 	"golang.org/x/exp/slices"
 
@@ -66,6 +67,10 @@ func exposeInterfaces(logger *slog.Logger, pid int, requestedDevs []string) erro
 		// Temporary name is required for creating the link first on the host
 		// before moving it to the container namespace.
 		tempName := randomString(8)
+		if len(tempName) > syscall.IFNAMSIZ {
+			tempName = tempName[:syscall.IFNAMSIZ]
+		}
+
 		linkAttrs := netlink.LinkAttrs{
 			Name:        tempName,
 			ParentIndex: hostLink.Attrs().Index,
