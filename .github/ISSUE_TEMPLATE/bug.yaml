@@ -1,0 +1,80 @@
+---
+name: Bug report
+description: Create a report to help us improve
+labels: ['kind/bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please, be ready for follow-up questions, and responding in a timely
+        manner. If we can't reproduce a bug, we might close your issue.
+        If we're wrong, feel free to re-open it and explain why.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Issue description"
+      description: |
+        Please provide as much info as possible. Not doing so may result in your bug not being addressed in a timely manner.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: "Steps to reproduce (describe as minimally and precisely as possible)?"
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: '### Environment'
+
+  - type: input
+    id: os
+    attributes:
+      label: "OS"
+      description: 'printf "$(uname -srm)\n$(cat /etc/os-release)\n"'
+    validations:
+      required: true
+
+  - type: input
+    id: os_kernel
+    attributes:
+      label: "Kernel Version"
+      description: 'uname -r'
+    validations:
+      required: true
+
+  - type: input
+    id: container_runtime_type
+    attributes:
+      label: "Container Runtime Type/Version"
+    validations:
+      required: true
+
+  - type: input
+    id: kubernetes_flavour
+    attributes:
+      label: "K8s Flavor/Version(e.g. K8s, OCP, Rancher, GKE, EKS)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra_files
+    attributes:
+      label: Extra logs and files
+      description: Please copy and paste relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+
+  - type: checkboxes
+    id: extra_info
+    attributes:
+      label: "Information to attach (optional if deemed irrelevant)"
+      description: |
+        [how to attach](https://help.github.com/articles/file-attachments-on-issues-and-pull-requests/)
+      options:
+        - label: Attach /var/log/habana-container-hook.log to "Extra logs and files" step
+          required: true
+        - label: Attach /var/log/habana-container-runtime.log to "Extra logs and files" step
+          required: true
