@@ -216,5 +216,5 @@ environment = []
 
 ## Issues and Contributing
 
-* Please let us know by [filing a new issue](https://github.com/HabanaAI/habana-container-runtime/issues/new)
+* Please let us know by [filing a new issue](https://github.com/HabanaAI/habana-container-runtime/issues/new/choose)
 * You can contribute by opening a [pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests)
