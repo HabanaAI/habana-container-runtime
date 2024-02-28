@@ -1,23 +1,21 @@
 ---
-name: Container Runtime Bug report
+name: Bug report
 description: Create a report to help us improve
-labels: []
+labels: ['kind/bug']
 body:
   - type: markdown
     attributes:
       value: |
         Please, be ready for follow-up questions, and responding in a timely
-        manner. If we can't reproduce a bug or think a feature already exists, we
-        might close your issue. If we're wrong, feel free to re-open it and
-        explain why.
-
+        manner. If we can't reproduce a bug, we might close your issue.
+        If we're wrong, feel free to re-open it and explain why.
 
   - type: textarea
     id: problem
     attributes:
-      label: "Issue or feature description"
+      label: "Issue description"
       description: |
-        Please provide as much info as possible. Not doing so may result in your bug/feature not being addressed in a timely manner.
+        Please provide as much info as possible. Not doing so may result in your bug not being addressed in a timely manner.
     validations:
       required: true
 
@@ -32,19 +30,19 @@ body:
     attributes:
       value: '### Environment'
 
-  - type: textarea
+  - type: input
     id: os
     attributes:
       label: "OS"
-      placeholder: 'printf "$(uname -srm)\n$(cat /etc/os-release)\n"'
+      description: 'printf "$(uname -srm)\n$(cat /etc/os-release)\n"'
     validations:
       required: true
 
-  - type: textarea
+  - type: input
     id: os_kernel
     attributes:
       label: "Kernel Version"
-      placeholder: 'uname -r'
+      description: 'uname -r'
     validations:
       required: true
 
@@ -62,6 +60,13 @@ body:
     validations:
       required: true
 
+  - type: textarea
+    id: extra_files
+    attributes:
+      label: Extra logs and files
+      description: Please copy and paste relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+
   - type: checkboxes
     id: extra_info
     attributes:
@@ -69,7 +74,7 @@ body:
       description: |
         [how to attach](https://help.github.com/articles/file-attachments-on-issues-and-pull-requests/)
       options:
-        - label: Attach /var/log/habana-container-hook.log
+        - label: Attach /var/log/habana-container-hook.log to "Extra logs and files" step
           required: true
-        - label: Attach /var/log/habana-container-runtime.log
+        - label: Attach /var/log/habana-container-runtime.log to "Extra logs and files" step
           required: true
