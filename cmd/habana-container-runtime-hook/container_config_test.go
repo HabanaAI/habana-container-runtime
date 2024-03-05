@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, HabanaLabs Ltd.  All rights reserved.
+ * Copyright (c) 2022, HabanaLabs Ltd.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import (
 )
 
 func TestGetHabanaConfig(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		description    string
 		env            map[string]string
 		privileged     bool
@@ -86,13 +86,12 @@ func TestGetHabanaConfig(t *testing.T) {
 				return
 			}
 			t.Errorf("Unexpected habanaConfig (got: %v, wanted %v)", config, tc.expectedConfig)
-
 		})
 	}
 }
 
 func TestDeviceListSourcePriority(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		description        string
 		envvarDevices      string
 		privileged         bool
@@ -151,14 +150,16 @@ func TestDeviceListSourcePriority(t *testing.T) {
 			// For all other tests, just grab the devices and check the results
 			getDevices()
 			if !reflect.DeepEqual(devices, tc.expectedDevices) {
-				t.Errorf("Unexpected devices (got: %v, wanted: %v)", *devices, *tc.expectedDevices)
+				if tc.expectedDevices != nil {
+					t.Errorf("Unexpected devices (got: %v, wanted: %v)", *devices, *tc.expectedDevices)
+				}
 			}
 		})
 	}
 }
 
 func TestIsPrivileged(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		spec     string
 		expected bool
 	}{

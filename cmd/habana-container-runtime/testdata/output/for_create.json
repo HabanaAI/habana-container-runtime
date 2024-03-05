@@ -402,9 +402,9 @@
     "hooks": {
         "prestart": [
             {
-                "path": "/usr/bin/habana-container-runtime-hook",
+                "path": "/usr/bin/habana-container-hook",
                 "args": [
-                    "/usr/bin/habana-container-runtime-hook",
+                    "/usr/bin/habana-container-hook",
                     "prestart"
                 ]
             }

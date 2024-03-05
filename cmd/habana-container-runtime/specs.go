@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, HabanaLabs Ltd.  All rights reserved.
+ * Copyright (c) 2022, HabanaLabs Ltd.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/HabanaAI/habana-container-runtime/config"
 	"github.com/HabanaAI/habana-container-runtime/discover"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
@@ -64,8 +66,9 @@ func saveSpecs(bundleConfigFile string, spec *specs.Spec) error {
 	return nil
 }
 
-func addPrestartHook(logger *slog.Logger, spec *specs.Spec) error {
-	path, err := execLookPath("habana-container-runtime-hook")
+func addPrestartHook(logger *slog.Logger, spec *specs.Spec, cfg *config.Config) error {
+	// path, err := execLookPath("habana-container-runtime-hook")
+	path, err := hookBinaryPath(cfg)
 	if err != nil {
 		path = hookDefaultFilePath
 		_, err = os.Stat(path)
@@ -80,7 +83,7 @@ func addPrestartHook(logger *slog.Logger, spec *specs.Spec) error {
 		spec.Hooks = &specs.Hooks{}
 	} else if len(spec.Hooks.Prestart) != 0 {
 		for _, hook := range spec.Hooks.Prestart {
-			if !strings.Contains(hook.Path, "habana-container-runtime-hook") {
+			if !strings.Contains(hook.Path, "habana-container-hook") {
 				continue
 			}
 			logger.Info("Existing habana prestart hook in OCI spec file")
@@ -97,8 +100,8 @@ func addPrestartHook(logger *slog.Logger, spec *specs.Spec) error {
 	return nil
 }
 
-func addCreateRuntimeHook(logger *slog.Logger, spec *specs.Spec) error {
-	path, err := execLookPath("habana-container-runtime-hook")
+func addCreateRuntimeHook(logger *slog.Logger, spec *specs.Spec, cfg *config.Config) error {
+	path, err := hookBinaryPath(cfg)
 	if err != nil {
 		path = hookDefaultFilePath
 		_, err = os.Stat(path)
@@ -113,7 +116,7 @@ func addCreateRuntimeHook(logger *slog.Logger, spec *specs.Spec) error {
 		spec.Hooks = &specs.Hooks{}
 	} else if len(spec.Hooks.CreateRuntime) != 0 {
 		for _, hook := range spec.Hooks.CreateRuntime {
-			if !strings.Contains(hook.Path, "habana-container-runtime-hook") {
+			if !strings.Contains(hook.Path, "habana-container-hook") {
 				continue
 			}
 			logger.Info("Existing habana createRuntime hook in OCI spec file")
@@ -133,41 +136,45 @@ func addCreateRuntimeHook(logger *slog.Logger, spec *specs.Spec) error {
 func addAcceleratorDevices(logger *slog.Logger, spec *specs.Spec, requestedDevs []string) error {
 	logger.Debug("Discovering accelerators")
 
-	// Extract module id for HABANA_VISIBLE_MODULES environment variables
-	modulesIDs := make([]string, 0, len(requestedDevs))
-	for _, acc := range requestedDevs {
-		id, err := discover.AcceleratorModuleID(acc)
-		if err != nil {
-			logger.Debug("discoring modules")
-			return err
-		}
-		modulesIDs = append(modulesIDs, id)
-	}
+	// TODO: wait for devs and QA approval
+	// // Extract module id for HABANA_VISIBLE_MODULES environment variables
+	// modulesIDs := make([]string, 0, len(requestedDevs))
+	// for _, acc := range requestedDevs {
+	// 	id, err := discover.AcceleratorModuleID(acc)
+	// 	if err != nil {
+	// 		logger.Debug("discoring modules")
+	// 		return err
+	// 	}
+	// 	modulesIDs = append(modulesIDs, id)
+	// }
+	// addEnvVar(spec, EnvHLVisibleModules, strings.Join(modulesIDs, ","))
 
 	// Prepare devices in OCI format
 	var devs []*discover.DevInfo
 	for _, u := range requestedDevs {
-		p := fmt.Sprintf("/dev/accel/accel%s", u)
-		logger.Info("Adding accelerator device", "path", p)
-		i, err := discover.DeviceInfo(p)
-		if err != nil {
-			return err
+		for _, d := range []string{"/dev/accel", "/dev/accel_controlD"} {
+			p := fmt.Sprintf("%s%s", d, u)
+			logger.Info("Adding accelerator device", "path", p)
+			i, err := discover.DeviceInfo(p)
+			if err != nil {
+				return err
+			}
+			devs = append(devs, i)
+
 		}
-		devs = append(devs, i)
 	}
 
 	addDevicesToSpec(logger, spec, devs)
 	addAllowList(logger, spec, devs)
-	addEnvVar(spec, EnvHLVisibleModules, strings.Join(modulesIDs, ","))
 
 	return nil
 }
 
-func addUverbsDevices(logger *slog.Logger, spec *specs.Spec, requestedDevs []string) error {
+func addUverbsDevices(logger *slog.Logger, spec *specs.Spec, requestedDevsIDs []string) error {
 	logger.Debug("Discovering uverbs")
 
 	var devs []*discover.DevInfo
-	for _, v := range requestedDevs {
+	for _, v := range requestedDevsIDs {
 		hlib := fmt.Sprintf("/sys/class/infiniband/hlib_%s", v)
 		logger.Debug("Getting uverbs device for hlib", "hlib", hlib)
 
@@ -296,4 +303,44 @@ func addAllowList(logger *slog.Logger, spec *specs.Spec, devices []*discover.Dev
 
 func addEnvVar(spec *specs.Spec, key string, value string) {
 	spec.Process.Env = append(spec.Process.Env, fmt.Sprintf("%s=%v", key, strconv.Quote(value)))
+}
+
+// hookBinaryPath looks for the binary in the following locations by order:
+//
+// 1. $PATH environment variable
+//
+// 2. Same directory of the runtime
+//
+// 3. binaries-dir value from config file
+//
+// 4. Default location
+func hookBinaryPath(cfg *config.Config) (string, error) {
+	// Search in PATH
+	binPath, err := execLookPath("habana-container-hook")
+	if err == nil { // IF NO ERROR
+		return binPath, nil
+	}
+
+	// Search in the binary habana-container-runtime's dir
+	currentExec, err := osExecutable()
+	if err == nil { // IF NO ERROR
+		currentDir := filepath.Dir(currentExec)
+		binPath = path.Join(currentDir, "habana-container-hook")
+		if _, err := osStat(binPath); err == nil { // IF NO ERROR
+			return binPath, nil
+		}
+	}
+
+	// Search in the dir provided by binaries-dir
+	binPath = path.Join(cfg.BinariesDir, "habana-container-hook")
+	if _, err := osStat(binPath); err == nil { // IF NO ERROR
+		return binPath, nil
+	}
+
+	binPath = hookDefaultFilePath
+	_, err = osStat(binPath)
+	if err == nil { // IF NO ERROR
+		return binPath, nil
+	}
+	return "", fmt.Errorf("habana-container-hook was not found on the system")
 }

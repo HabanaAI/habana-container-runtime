@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, HabanaLabs Ltd.  All rights reserved.
+ * Copyright (c) 2022, HabanaLabs Ltd.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	hookDefaultFilePath = "/usr/bin/habana-container-runtime-hook"
+	hookDefaultFilePath = "/usr/bin/habana-container-hook"
 	defaultL3Config     = "/etc/habanalabs/gaudinet.json"
 )
 
@@ -43,9 +43,11 @@ const (
 )
 
 var (
-	execLookPath = exec.LookPath
 	osReadDir    = os.ReadDir
 	execRunc     = execRuncFunc
+	execLookPath = exec.LookPath
+	osStat       = os.Stat
+	osExecutable = os.Executable
 )
 
 func main() {
@@ -129,17 +131,16 @@ func handleRequest(logger *slog.Logger, cfg *config.Config, args []string) error
 	// execute runc. The hook and libhabana takes cares of the devices mounts.
 	if cfg.Runtime.Mode == config.ModeLegacy {
 		logger.Info("In legacy mode")
-		err = addPrestartHook(logger, specConfig)
+		err = addPrestartHook(logger, specConfig, cfg)
 		if err != nil {
 			return fmt.Errorf("adding habana prestart hook: %s", err)
 		}
 		return nil
 	}
 
-	// TODO: Move to CNI plugin
 	// Always add this hook to expose network interfaces information
 	// inside the container
-	err = addCreateRuntimeHook(logger, specConfig)
+	err = addCreateRuntimeHook(logger, specConfig, cfg)
 	if err != nil {
 		return fmt.Errorf("adding createRuntime hook: %w", err)
 	}

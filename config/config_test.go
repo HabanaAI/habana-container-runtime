@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, HabanaLabs Ltd.  All rights reserved.
+ * Copyright (c) 2022, HabanaLabs Ltd.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,19 @@ func TestGetConfig(t *testing.T) {
 	want := &Config{
 		MountAccelerators: true,
 		MountUverbs:       true,
+		BinariesDir:       "/usr/local/bin",
 		Runtime: RuntimeConfig{
 			AlwaysMount:   false,
 			DebugFilePath: "/tmp/runtime-test",
 			LogLevel:      slog.LevelDebug,
 			SystemdCgroup: true,
 			Mode:          ModeLegacy,
+		},
+		CLI: CLIConfig{
+			Debug:       "/dev/null",
+			Root:        nil,
+			Path:        nil,
+			Environment: []string{},
 		},
 		NetworkL3Config: NetworkConfig{
 			"/tmp/testdata.json",
