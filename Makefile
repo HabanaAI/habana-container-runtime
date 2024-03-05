@@ -23,24 +23,21 @@ build-binary: clean build-runtime build-hook build-cli
 
 build-runtime:
 	@echo "Building $(RUNTIME_BINARY)"
-	CGO_ENABLED=0 go build -o dist/linux_$${ARCH}/$(RUNTIME_BINARY) ./cmd/habana-container-runtime/
-	# @CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
-	# @CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
-	# @CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
+	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
+	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
+	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
 
 build-hook:
 	@echo "Building $(HOOK_BINARY)"
-	CGO_ENABLED=0 go build -o dist/linux_$${ARCH}/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
-	# @CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
-	# @CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
-	# @CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
+	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
+	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
+	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
 
 build-cli:
 	@echo "Building $(CLI_BINARY)"
-	CGO_ENABLED=0 go build  -o dist/linux_$${ARCH}/${CLI_BINARY} ./cmd/habana-container-cli/
-	# @CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${CLI_BINARY} ./cmd/habana-container-cli/
-	# @CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${CLI_BINARY} ./cmd/habana-container-cli/
-	# @CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${CLI_BINARY} ./cmd/habana-container-cli/
+	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${CLI_BINARY} ./cmd/habana-container-cli/
+	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${CLI_BINARY} ./cmd/habana-container-cli/
+	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${CLI_BINARY} ./cmd/habana-container-cli/
 
 clean:
 	go clean > /dev/null

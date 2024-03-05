@@ -60,19 +60,13 @@ environment.
 
 #### Build package from source
 
-##### Debian package
+You must have docker installed. Building the packages is done using goreleaser.
 
 ```bash
-make docker-amd64
-dpkg -i dist/<OS>/amd64/*.deb
+make release
 ```
 
-##### RPM package
-
-```bash
-make docker-x86_64
-yum install dist/<OS>/x86_64/*.rpm
-```
+Artifacts are found under `dist/` folder.
 
 ### Install pre-built package
 
