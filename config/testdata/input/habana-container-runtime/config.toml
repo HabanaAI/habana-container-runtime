@@ -5,8 +5,10 @@ mount_uverbs = true
 path = "/tmp/testdata.json"
 
 [habana-container-runtime]
+binaries-dir = "/usr/local/bin"
 visible_devices_all_as_default = false
 mode = "legacy"
 debug = "/tmp/runtime-test"
 systemd_cgroup = true
 log_level = "debug"
+

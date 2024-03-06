@@ -32,7 +32,8 @@ RUN mkdir -p ${GOPATH}/bin
 
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
-COPY src .
+ARG ARCH
+COPY . .
 RUN make build
 
 # packaging
@@ -48,10 +49,12 @@ ENV TOOLKIT_VERSION $TOOLKIT_VERSION
 ENV DIST_DIR=/tmp/habana-container-runtime-$PKG_VERS/SOURCES
 RUN mkdir -p $DIST_DIR /dist
 
-RUN mv habana-container-runtime $DIST_DIR/habana-container-runtime
+RUN mv dist/linux_${ARCH}/habana-container-runtime $DIST_DIR/habana-container-runtime && \
+    mv dist/linux_${ARCH}/habana-container-cli $DIST_DIR/habana-container-cli && \
+    mv dist/linux_${ARCH}/habana-container-hook $DIST_DIR/habana-container-hook
 
 WORKDIR $DIST_DIR/..
-COPY rpm .
+COPY ./packaging/rpm .
 
 CMD arch=$(uname -m) && \
     rpmbuild --clean --target=$arch -bb \

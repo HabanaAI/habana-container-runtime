@@ -1,0 +1,87 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 1
+
+project_name: habanalabs-container-runtime
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    binary: habana-container-runtime
+    main: ./cmd/habana-container-runtime/
+    id: habana-container-runtime
+
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    binary: habana-container-hook
+    main: ./cmd/habana-container-runtime-hook/
+    id: habana-container-hook
+
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    binary: habana-container-cli
+    main: ./cmd/habana-container-cli/
+    id: habana-container-cli
+
+archives:
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+
+nfpms:
+  - id: habanalabs-container-runtime
+    vendor: Habana Labs Ltd.
+    maintainer: Habana Labs Ltd.
+    description: |
+      Provides a modified version of runc allowing users to run GAUDI enabled containers.
+    license: "Apache-2.0"
+    formats:
+      - deb
+      - rpm
+    section: utils
+    priority: optional
+    homepage: https://github.com/HabanaAI/habana-container-runtime
+    contents:
+    - src: /usr/bin/habana-container-hook
+      dst: /usr/bin/habana-container-runtime-hook
+      type: symlink
+
+    - src: packaging/config.toml
+      dst: /etc/habana-container-runtime/config.toml
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+snapshot:
+  name_template: '{{ .Version }}'

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, HabanaLabs Ltd.  All rights reserved.
+ * Copyright (c) 2022, HabanaLabs Ltd.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ const (
 	configOverride    = "XDG_CONFIG_HOME"
 	configFilePath    = "habana-container-runtime/config.toml"
 
-	hookDefaultFilePath = "/usr/bin/habana-container-runtime-hook"
+	hookDefaultFilePath = "/usr/bin/habana-container-hook"
 	defaultL3Config     = "/etc/habanalabs/gaudinet.json"
 )
 
@@ -49,6 +49,7 @@ type Config struct {
 	AcceptEnvvarUnprivileged bool          `toml:"accept-habana-visible-devices-envvar-when-unprivileged"`
 	MountAccelerators        bool          `toml:"mount_accelerators"`
 	MountUverbs              bool          `toml:"mount_uverbs"`
+	BinariesDir              string        `toml:"binaries-dir"`
 }
 
 type NetworkConfig struct {
@@ -96,6 +97,7 @@ func defaultConfig() Config {
 	return Config{
 		MountAccelerators: true,
 		MountUverbs:       true,
+		BinariesDir:       "/usr/local/bin",
 		NetworkL3Config: NetworkConfig{
 			Path: defaultL3Config,
 		},

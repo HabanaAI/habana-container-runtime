@@ -11,3 +11,17 @@ Architecture: any
 Description: HABANA container runtime
  Provides a modified version of runc allowing users to run GAUDI enabled
  containers.
+
+Package: habana-container-hook
+Architecture: any
+Depends: ${misc:Depends}
+Description: HABANA container runtime hook
+ Provides a OCI hook to enable GAUDI support in containers.
+
+Package: libhabana-container
+Maintainer: Habana Labs
+Architecture: amd64
+Depends:
+Description: Habana container runtime library (command-line tools)
+ This package contains command-line tools to let the container leveraging the Habanalabs devices
+

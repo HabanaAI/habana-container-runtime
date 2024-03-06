@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, HabanaLabs Ltd.  All rights reserved.
+ * Copyright (c) 2022, HabanaLabs Ltd.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ type NetJSON struct {
 }
 
 // Generates creates the mac address information for the requested accelerator devices.
-func Generate(devices []string, containerRootFS string) error {
+func Generate(devicesIDs []string, containerRootFS string) error {
 	basePath := path.Join(containerRootFS, "/etc/habanalabs/")
 	netFilePath := path.Join(basePath, "macAddrInfo.json")
 
@@ -58,7 +58,7 @@ func Generate(devices []string, containerRootFS string) error {
 		}
 	}
 
-	netData, err := netConfig(devices)
+	netData, err := netConfig(devicesIDs)
 	if err != nil {
 		return err
 	}

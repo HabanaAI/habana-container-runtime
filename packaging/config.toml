@@ -14,7 +14,7 @@ disable-require = false
 [network-layer-routes]
 ## Override the default path on hode for the network configuration layer.
 ## default:/etc/habanalabs/gaudinet.json
-# path = /etc/habanalabs/gaudinet.json
+# path = "/etc/habanalabs/gaudinet.json"
 
 [habana-container-cli]
 #root = "/run/habana/driver"

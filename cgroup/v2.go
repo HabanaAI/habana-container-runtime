@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, HabanaLabs Ltd.  All rights reserved.
+ * Copyright (c) 2022, HabanaLabs Ltd.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package cgroup
 
 import (
@@ -38,7 +39,6 @@ func (c *cgroupv2) SetLogger(logger *log.Logger) {
 
 // GetDeviceCGroupMountPath returns the mount path (and its prefix) for the device cgroup controller associated with pid
 func (c *cgroupv2) DeviceCGroupMountPath(procRootPath string, pid int) (string, string, error) {
-
 	path := fmt.Sprintf(filepath.Join(procRootPath, "proc", "%d", "mountinfo"), pid)
 	file, err := os.Open(path)
 	if err != nil {
@@ -73,6 +73,7 @@ func (c *cgroupv2) DeviceCGroupMountPath(procRootPath string, pid int) (string, 
 
 	return "", "", fmt.Errorf("no cgroup2 filesystem in mountinfo file")
 }
+
 func (c *cgroupv2) DeviceCGroupRootPath(procRootPath string, prefix string, pid int) (string, error) {
 	// Open the pid's cgroup file in /proc.
 	path := fmt.Sprintf(filepath.Join(procRootPath, "proc", "%v", "cgroup"), pid)

@@ -1,16 +1,17 @@
-#  Copyright 2022 The HabanaLabs Ltd. All rights reserved.
+# Copyright (c) 2022, HabanaLabs Ltd.  All rights reserved.
 #
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 TAG := $(shell git describe --abbrev=0 --tags --always)
 HASH := $(shell git rev-parse HEAD)
 DATE := $(shell date +%Y-%m-%d.%H:%M:%S)
@@ -30,26 +31,26 @@ PKG_REV := 1
 TOOLKIT_VERSION := 1.3.0
 GOLANG_VERSION  := 1.21.0
 
-# Go CI related commands
-build: clean build-runtime build-hook build-cli
+# # Go CI related commands
+build-binary: clean build-runtime build-hook build-cli
 
 build-runtime:
 	@echo "Building $(RUNTIME_BINARY)"
-	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/${RUNTIME_BINARY}_linux_amd64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
-	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/${RUNTIME_BINARY}_linux_386/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
-	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/${RUNTIME_BINARY}_linux_arm64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
+	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
+	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
+	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
 
 build-hook:
 	@echo "Building $(HOOK_BINARY)"
-	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/${HOOK_BINARY}_linux_amd64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
-	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/${HOOK_BINARY}_linux_386/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
-	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/${HOOK_BINARY}_linux_arm64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
+	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
+	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
+	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
 
 build-cli:
 	@echo "Building $(CLI_BINARY)"
-	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/${CLI_BINARY}_linux_amd64/${CLI_BINARY} ./cmd/habana-container-cli/
-	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/${CLI_BINARY}_linux_386/${CLI_BINARY} ./cmd/habana-container-cli/
-	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/${CLI_BINARY}_linux_arm64/${CLI_BINARY} ./cmd/habana-container-cli/
+	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${CLI_BINARY} ./cmd/habana-container-cli/
+	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${CLI_BINARY} ./cmd/habana-container-cli/
+	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${CLI_BINARY} ./cmd/habana-container-cli/
 
 clean:
 	go clean > /dev/null
@@ -70,12 +71,28 @@ lint:
 tidy:
 	@go mod tidy && go mod vendor
 
-packages: build
-	mkdir -p dist/deb
-	mkdir -p dist/rpm
-	nfpm package --packager deb --target ./dist/deb/
-	nfpm package --packager rpm --target ./dist/rpm/
+# Build the binaries in all available architectures.
+build:
+	docker run --rm --privileged \
+		-v $$PWD:/go/src/github.com/HabanaAI/habana-container-runtime \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-w /go/src/github.com/HabanaAI/habana-container-runtime \
+		-e GITHUB_TOKEN \
+		-e DOCKER_USERNAME \
+		-e DOCKER_PASSWORD \
+		-e DOCKER_REGISTRY \
+		goreleaser/goreleaser build --snapshot --clean
 
+# Build binaries, create archives and OS packages and uploads all artifacts to github repo
+release:
+	docker run --rm \
+		-v $$PWD:/go/src/github.com/HabanaAI/habana-container-runtime \
+		-w /go/src/github.com/HabanaAI/habana-container-runtime \
+		-e GITHUB_TOKEN \
+		-e DOCKER_USERNAME \
+		-e DOCKER_PASSWORD \
+		-e DOCKER_REGISTRY \
+		goreleaser/goreleaser release --clean --snapshot
 #######################################
 
 # Supported OSs by architecture
@@ -100,7 +117,7 @@ docker-x86_64: $(X86_64_TARGETS)
 --%: VERSION = $(patsubst $(OS)%-$(ARCH),%,$(TARGET_PLATFORM))
 --%: BASEIMAGE = $(OS):$(VERSION)
 
---%: BUILDIMAGE = habana/$(BINARY_NAME)/$(OS)$(VERSION)-$(ARCH)
+--%: BUILDIMAGE = habana/habana-container-runtime/$(OS)$(VERSION)-$(ARCH)
 --%: DOCKERFILE = $(CURDIR)/docker/Dockerfile.$(OS)
 --%: ARTIFACTS_DIR = $(DIST_DIR)/$(OS)$(VERSION)/$(ARCH)
 --%: docker-build-%
@@ -127,6 +144,7 @@ docker-build-%:
 	    --build-arg TOOLKIT_VERSION="$(TOOLKIT_VERSION)" \
 	    --build-arg PKG_VERS="$(LIB_VERSION)" \
 	    --build-arg PKG_REV="$(PKG_REV)" \
+		--build-arg ARCH=$(ARCH) \
 	    --tag $(BUILDIMAGE) \
 	    --file $(DOCKERFILE) .
 	$(DOCKER) run \
