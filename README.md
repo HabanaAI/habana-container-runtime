@@ -8,8 +8,6 @@ If environment variable `HABANA_VISIBLE_DEVICES` is set in the OCI spec, the hoo
     - [Build from source](#build-from-source)
       - [Build binaries](#build-binaries)
       - [Build package from source](#build-package-from-source)
-        - [Debian package](#debian-package)
-        - [RPM package](#rpm-package)
     - [Install pre-built package](#install-pre-built-package)
       - [Ubuntu distributions](#ubuntu-distributions)
       - [CentOS and Amazon linux distributions](#centos-and-amazon-linux-distributions)
