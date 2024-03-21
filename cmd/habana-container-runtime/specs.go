@@ -152,7 +152,7 @@ func addAcceleratorDevices(logger *slog.Logger, spec *specs.Spec, requestedDevs 
 	// Prepare devices in OCI format
 	var devs []*discover.DevInfo
 	for _, u := range requestedDevs {
-		for _, d := range []string{"/dev/accel", "/dev/accel_controlD"} {
+		for _, d := range []string{"/dev/accel/accel", "/dev/accel/accel_controlD"} {
 			p := fmt.Sprintf("%s%s", d, u)
 			logger.Info("Adding accelerator device", "path", p)
 			i, err := discover.DeviceInfo(p)
