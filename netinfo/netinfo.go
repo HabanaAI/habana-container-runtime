@@ -34,8 +34,12 @@ var osReadFile = os.ReadFile
 // hlsNumInterfaceByType hold the known number of network ports (internal+external)
 // for each Gaudi device we have
 var hlsNumInterfaceByType = map[string]int{
-	"gaudi":  10,
-	"gaudi2": 24,
+	"gaudi":   10,
+	"gaudi2":  24,
+	"gaudi2b": 24,
+	"gaudi2c": 24,
+	"gaudi2d": 24,
+	"gaudi3":  24,
 }
 
 type MACInfo struct {
