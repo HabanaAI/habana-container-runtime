@@ -1,33 +1,29 @@
 # Habana-Container-Runtime
 
-A modified version of [runc](https://github.com/opencontainers/runc) adding a custom [pre-start hook](https://github.com/HabanaAI/habana-container-hook) to all containers
-If environment variable `HABANA_VISIBLE_DEVICES` is set in the OCI spec, the hook will configure Habana device access for the container by leveraging `habana-container-cli` from project [libhabana-container](https://github.com/HabanaAI/libhabana-container).
+A modified version of [runc](https://github.com/opencontainers/runc) integrates a customized [pre-start hook](https://github.com/HabanaAI/habana-container-hook) into all containers.
+If the environment variable `HABANA_VISIBLE_DEVICES` is set in the OCI specification, this hook will configure Habana device access for the container by editing the container bundle specification and using `habana-container-cli` to expose the devices' network ports.
 
 - [Habana-Container-Runtime](#habana-container-runtime)
-  - [Installation](#installation)
-    - [Build from source](#build-from-source)
-      - [Build binaries](#build-binaries)
-      - [Build package from source](#build-package-from-source)
-    - [Install pre-built package](#install-pre-built-package)
-      - [Ubuntu distributions](#ubuntu-distributions)
-      - [CentOS and Amazon linux distributions](#centos-and-amazon-linux-distributions)
-  - [Docker Engine setup](#docker-engine-setup)
-      - [Daemon configuration file](#daemon-configuration-file)
+  - [Building from source](#building-from-source)
+    - [Build binaries](#build-binaries)
+    - [Building Packages From Source](#building-packages-from-source)
+  - [Installing a Pre-built Package](#installing-a-pre-built-package)
+  - [Docker Engine Configuration](#docker-engine-configuration)
+      - [Daemon Configuration File](#daemon-configuration-file)
   - [ContainerD Setup](#containerd-setup)
-    - [Containerd configuration file](#containerd-configuration-file)
+    - [Containerd Configuration File](#containerd-configuration-file)
   - [CRI-O Setup](#cri-o-setup)
-    - [CRI-O configuration file](#cri-o-configuration-file)
+    - [CRI-O Configuration File](#cri-o-configuration-file)
   - [Usage example](#usage-example)
   - [Environment variables (OCI spec)](#environment-variables-oci-spec)
     - [`HABANA_VISIBLE_DEVICES`](#habana_visible_devices)
-      - [Possible values](#possible-values)
     - [`HABANA_RUNTIME_ERROR` **Auto generated**](#habana_runtime_error-auto-generated)
   - [Config](#config)
   - [Issues and Contributing](#issues-and-contributing)
 
-## Build from source
+## Building from source
 
-All binaries are build under dist/{BINARY_NAME}_architecture/{BINARY_NAME}.
+All binaries are built under dist/{BINARY_NAME}_architecture/{BINARY_NAME}.
 
 Available architectures:
 - linux_amd64
@@ -54,7 +50,7 @@ After building the binaries, copy the config from `packaging/config.toml`
 into `/etc/habana-container-runtime/config.toml` and edit for your
 environment.
 
-### Build package from source
+### Building Packages From Source
 
 You must have docker installed. Building the packages is done using goreleaser.
 
@@ -64,14 +60,14 @@ make release
 
 Artifacts are found under `dist/` folder.
 
-## Install pre-built package
+## Installing a Pre-built Package
 
-Installation and usage guides can be found in the [habana.ai docs](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#set-up-container-usage)
+Installation and usage guides available in [habana.ai docs](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#set-up-container-usage)
 
 
-## Docker Engine setup
+## Docker Engine Configuration
 
-#### Daemon configuration file
+#### Daemon Configuration File
 
 ```bash
 sudo tee /etc/docker/daemon.json <<EOF
@@ -87,14 +83,15 @@ EOF
 sudo systemctl restart docker
 ```
 
-You can optionally reconfigure the default runtime by adding the following to `/etc/docker/daemon.json`:
+Optionally, you can adjust the default runtime by appending the following to `/etc/docker/daemon.json`:
+
 ```
 "default-runtime": "habana"
 ```
 
 ## ContainerD Setup
 
-### Containerd configuration file
+### Containerd Configuration File
 
 ```bash
 sudo tee /etc/containerd/config.toml <<EOF
@@ -120,7 +117,7 @@ sudo systemctl restart containerd
 
 Create new config file at `/etc/crio/crio.conf.d/99-habana-ai.conf`.
 
-### CRI-O configuration file
+### CRI-O Configuration File
 
 ```toml
 [crio.runtime]
@@ -137,8 +134,9 @@ Restart crio service: `systemctl restart crio.service`
 
 ## Usage example
 
-Currently habana-container-runtime has to be used with habana-container-hook and libhabana-container
-Bellow is the case when host machine has 8 Habana devices and mount `all` by HABANA_VISIBLE_DEVICES=all
+Currently, `habana-container-runtime` must be used with `habana-container-hook` and libhabana-container.
+
+The example below assumes a host machine featuring 8 Habana devices, and demonstrates how to mount all of them inside a container. This is done via `HABANA_VISIBLE_DEVICES=all` environment variable.
 
 ```bash
 docker run --rm --runtime=habana -e HABANA_VISIBLE_DEVICES=all ubuntu:22.04 /bin/bash -c "ls /dev/accel/*"
@@ -167,16 +165,16 @@ docker run --rm --runtime=habana -e HABANA_VISIBLE_DEVICES=all ubuntu:22.04 /bin
 Each environment variable maps to an command-line argument for `habana-container-cli` from [libhabana-container](https://github.com/HabanaAI/libhabana-container).
 
 ### `HABANA_VISIBLE_DEVICES`
-This variable controls which Habana devices will be made accessible inside the container.
+The variable determines which Habana devices will be accessible within the container.
 
-#### Possible values
+**Possible values**
 * `0,1,2` …: a comma-separated list of index(es).
 * `all`: all Habana devices will be accessible, this is the default value in our container images.
 
 
 ### `HABANA_RUNTIME_ERROR` **Auto generated**
-Variable hold the last error from the runtime flow. The runtime
-does not fail the pod creation in most cases, so we propagate the error inside the container for debugging purposes.
+The variable holds the last error from the runtime flow. The runtime
+does not fail the pod creation in most cases, so the error is propagated inside the container for debugging purposes.
 
 
 ## Config
