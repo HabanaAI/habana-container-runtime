@@ -23,6 +23,7 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -136,19 +137,6 @@ func addCreateRuntimeHook(logger *slog.Logger, spec *specs.Spec, cfg *config.Con
 func addAcceleratorDevices(logger *slog.Logger, spec *specs.Spec, requestedDevs []string) error {
 	logger.Debug("Discovering accelerators")
 
-	// TODO: wait for devs and QA approval
-	// // Extract module id for HABANA_VISIBLE_MODULES environment variables
-	// modulesIDs := make([]string, 0, len(requestedDevs))
-	// for _, acc := range requestedDevs {
-	// 	id, err := discover.AcceleratorModuleID(acc)
-	// 	if err != nil {
-	// 		logger.Debug("discoring modules")
-	// 		return err
-	// 	}
-	// 	modulesIDs = append(modulesIDs, id)
-	// }
-	// addEnvVar(spec, EnvHLVisibleModules, strings.Join(modulesIDs, ","))
-
 	// Prepare devices in OCI format
 	var devs []*discover.DevInfo
 	for _, u := range requestedDevs {
@@ -164,6 +152,18 @@ func addAcceleratorDevices(logger *slog.Logger, spec *specs.Spec, requestedDevs 
 		}
 	}
 
+	// Extract module id for HABANA_VISIBLE_MODULES environment variables
+	modulesIDs := make([]string, 0, len(requestedDevs))
+	for _, acc := range requestedDevs {
+		id, err := discover.AcceleratorModuleID(acc)
+		if err != nil {
+			return err
+		}
+		modulesIDs = append(modulesIDs, id)
+	}
+	sort.Strings(modulesIDs)
+
+	addEnvVar(spec, EnvHLVisibleModules, strings.Join(modulesIDs, ","))
 	addDevicesToSpec(logger, spec, devs)
 	addAllowList(logger, spec, devs)
 
