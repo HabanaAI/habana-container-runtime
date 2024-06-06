@@ -45,26 +45,32 @@ RUN make build-binary
 # packaging
 ARG PKG_VERS
 ARG PKG_REV
-ARG TOOLKIT_VERSION
 
-ENV DEBFULLNAME "Habana Labs"
 ENV REVISION "$PKG_VERS-$PKG_REV"
-ENV TOOLKIT_VERSION $TOOLKIT_VERSION
 ENV SECTION ""
 
 # output directory
 ENV DIST_DIR=/tmp/habana-container-runtime-$PKG_VERS
 RUN mkdir -p $DIST_DIR /dist
 
-RUN mv dist/linux_${ARCH}/habana-container-runtime $DIST_DIR/habana-container-runtime && \
-    mv dist/linux_${ARCH}/habana-container-cli $DIST_DIR/habana-container-cli && \
-    mv dist/linux_${ARCH}/habana-container-hook $DIST_DIR/habana-container-hook
+RUN mv dist/linux_amd64/habana-container-runtime $DIST_DIR/habana-container-runtime && \
+    mv dist/linux_amd64/habana-container-cli $DIST_DIR/habana-container-cli && \
+    mv dist/linux_amd64/habana-container-hook $DIST_DIR/habana-container-hook
+
+COPY packaging/config.toml $DIST_DIR/config.toml
+# Hook for Project Atomic's fork of Docker: https://github.com/projectatomic/docker/tree/docker-1.13.1-rhel#add-dockerhooks-exec-custom-hooks-for-prestartpoststop-containerspatch
+# This might not be useful on Amazon Linux, but it's simpler to keep the RHEL
+# and Amazon Linux packages identical.
+COPY packaging/oci-habana-hook $DIST_DIR/oci-habana-hook
+
+# Hook for libpod/CRI-O: https://github.com/containers/libpod/blob/v0.8.5/pkg/hooks/docs/oci-hooks.5.md
+COPY packaging/oci-habana-hook.json $DIST_DIR/oci-habana-hook.json
 
 WORKDIR $DIST_DIR
+
 COPY ./packaging/debian ./debian
 
-RUN sed -i "s;@VERSION@;${REVISION};" debian/changelog && \
-    sed -i "s;@TOOLKIT_VERSION@;${TOOLKIT_VERSION};" debian/control && \
+RUN sed -i "s;VERSION;${REVISION};" debian/changelog && \
     if [ "$REVISION" != "$(dpkg-parsechangelog --show-field=Version)" ]; then exit 1; fi
 
 CMD export DISTRIB="$(lsb_release -cs)" && \

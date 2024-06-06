@@ -1,1 +1,7 @@
 habana-container-runtime /usr/bin
+habana-container-hook /usr/bin
+habana-container-cli /usr/bin
+
+config.toml /etc/habana-container-runtime
+oci-habana-hook /usr/libexec/oci/hooks.d
+oci-habana-hook.json /usr/share/containers/oci/hooks.d

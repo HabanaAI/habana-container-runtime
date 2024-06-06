@@ -1,27 +1,12 @@
 Source: habana-container-runtime
-Section: @SECTION@utils
+Section: misc
 Priority: optional
-Maintainer: Habana Labs
-Standards-Version: 0.0.1
+Maintainer: Tal Cohen <tacohen@habana.ai>
+Version: VERSION_PLACEHOLDER
 Homepage: https://github.com/HabanaAI/habana-container-runtime
 Build-Depends: debhelper (>= 9)
 
-Package: habana-container-runtime
-Architecture: any
-Description: HABANA container runtime
- Provides a modified version of runc allowing users to run GAUDI enabled
- containers.
-
-Package: habana-container-hook
-Architecture: any
-Depends: ${misc:Depends}
-Description: HABANA container runtime hook
- Provides a OCI hook to enable GAUDI support in containers.
-
-Package: libhabana-container
-Maintainer: Habana Labs
+Package: habanalabs-container-runtime
 Architecture: amd64
-Depends:
-Description: Habana container runtime library (command-line tools)
- This package contains command-line tools to let the container leveraging the Habanalabs devices
-
+Description: HABANA container runtime
+ Provides a modified version of runc allowing users to run Intel® Gaudi® enabled containers.
