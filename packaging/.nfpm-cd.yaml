@@ -1,0 +1,51 @@
+# goreleaser/nfpm package --config .nfpm-cd.yaml --target /tmp --packager deb
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+name: habanalabs-container-runtime
+arch: "amd64"
+platform: "linux"
+
+homepage: https://github.com/HabanaAI/habana-container-runtime
+maintainer: Tal Cohen <tacohen@habana.ai>
+vendor: Habana Labs
+license: "Apache-2.0"
+section: misc
+priority: optional
+description: |
+  HABANA container runtime 
+    Provides a modified version of runc allowing users to run Intel® Gaudi® AI Accelerator enabled containers.
+
+version: "${RELEASE_VERSION}"
+release: "${RELEASE_BUILD_ID}${DIST_TYPE}"
+
+contents:
+- src: packaging/config.toml
+  dst: /etc/habana-container-runtime/config.toml
+- src: packaging/oci-habana-hook
+  dst: /usr/libexec/oci/hooks.d/oci-habana-hook
+- src: packaging/oci-habana-hook.json
+  dst: /usr/share/containers/oci/hooks.d/oci-habana-hook.json
+- src: ./LICENSE
+  dst: /usr/share/doc/habana-container-runtime/copyright
+  file_info:
+    owner: root
+    group: root
+    mode: 0644
+
+deb:
+  compression: xz
+  signature:
+    method: dpkg-sig
+    key_file: /tmp/signkey.gpg
+    type: origin
+    key_id: 36A2DE65
+rpm:
+  signature:
+    key_file: /tmp/signkey.gpg
+    key_id: 1E676CE836A2DE65

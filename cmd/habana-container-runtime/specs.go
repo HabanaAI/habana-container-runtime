@@ -23,7 +23,7 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
-	"strconv"
+	"sort"
 	"strings"
 
 	"github.com/HabanaAI/habana-container-runtime/config"
@@ -136,46 +136,53 @@ func addCreateRuntimeHook(logger *slog.Logger, spec *specs.Spec, cfg *config.Con
 func addAcceleratorDevices(logger *slog.Logger, spec *specs.Spec, requestedDevs []string) error {
 	logger.Debug("Discovering accelerators")
 
-	// TODO: wait for devs and QA approval
-	// // Extract module id for HABANA_VISIBLE_MODULES environment variables
-	// modulesIDs := make([]string, 0, len(requestedDevs))
-	// for _, acc := range requestedDevs {
-	// 	id, err := discover.AcceleratorModuleID(acc)
-	// 	if err != nil {
-	// 		logger.Debug("discoring modules")
-	// 		return err
-	// 	}
-	// 	modulesIDs = append(modulesIDs, id)
-	// }
-	// addEnvVar(spec, EnvHLVisibleModules, strings.Join(modulesIDs, ","))
-
 	// Prepare devices in OCI format
 	var devs []*discover.DevInfo
-	for _, u := range requestedDevs {
-		for _, d := range []string{"/dev/accel/accel", "/dev/accel/accel_controlD"} {
-			p := fmt.Sprintf("%s%s", d, u)
-			logger.Info("Adding accelerator device", "path", p)
-			i, err := discover.DeviceInfo(p)
+	for _, reqDev := range requestedDevs {
+		for _, d := range discover.AcceleratorDevices() {
+			if d[len(d)-1:] != reqDev {
+				continue
+			}
+			logger.Info("Adding accelerator device", "path", d)
+			i, err := discover.DeviceInfo(d)
 			if err != nil {
 				return err
 			}
 			devs = append(devs, i)
-
 		}
 	}
-
 	addDevicesToSpec(logger, spec, devs)
 	addAllowList(logger, spec, devs)
 
 	return nil
 }
 
-func addUverbsDevices(logger *slog.Logger, spec *specs.Spec, requestedDevsIDs []string) error {
+func addAcceleratorModuleIDs(logger *slog.Logger, spec *specs.Spec, requestedDevs []string) error {
+	// Extract module id for HABANA_VISIBLE_MODULES environment variables
+	modulesIDs := make([]string, 0, len(requestedDevs))
+	for _, acc := range requestedDevs {
+		id, err := discover.AcceleratorModuleID(acc)
+		if err != nil {
+			logger.Debug("discoring modules", "error", err)
+			return err
+		}
+		modulesIDs = append(modulesIDs, id)
+	}
+	sort.Strings(modulesIDs)
+
+	addEnvVar(spec, EnvHLVisibleModules, strings.Join(modulesIDs, ","))
+
+	logger.Debug("Exposed module ids", "module_ids", modulesIDs)
+
+	return nil
+}
+
+func addUverbsDevices(logger *slog.Logger, spec *specs.Spec) error {
 	logger.Debug("Discovering uverbs")
 
 	var devs []*discover.DevInfo
-	for _, v := range requestedDevsIDs {
-		hlib := fmt.Sprintf("/sys/class/infiniband/hlib_%s", v)
+	hlibDevices := filterDevicesByENV(spec, discover.InfinibandDevices())
+	for _, hlib := range hlibDevices {
 		logger.Debug("Getting uverbs device for hlib", "hlib", hlib)
 
 		// Extract uverb from hlib device
@@ -302,7 +309,7 @@ func addAllowList(logger *slog.Logger, spec *specs.Spec, devices []*discover.Dev
 }
 
 func addEnvVar(spec *specs.Spec, key string, value string) {
-	spec.Process.Env = append(spec.Process.Env, fmt.Sprintf("%s=%v", key, strconv.Quote(value)))
+	spec.Process.Env = append(spec.Process.Env, fmt.Sprintf("%s=%v", key, value))
 }
 
 // hookBinaryPath looks for the binary in the following locations by order:

@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -151,6 +152,7 @@ func handleRequest(logger *slog.Logger, cfg *config.Config, args []string) error
 	requestedDevices := discover.DevicesIDs(filterDevicesByENV(specConfig, discover.AcceleratorDevices()))
 	if len(requestedDevices) == 0 {
 		logger.Info("No habanalabs accelerators found")
+		addErrorEnvVar(specConfig, "no accelerators found")
 		return nil
 	}
 	logger.Debug("Requested devices", "devices", requestedDevices)
@@ -163,8 +165,14 @@ func handleRequest(logger *slog.Logger, cfg *config.Config, args []string) error
 		}
 	}
 
+	err = addAcceleratorModuleIDs(logger, specConfig, requestedDevices)
+	if err != nil {
+		addErrorEnvVar(specConfig, err.Error())
+		return fmt.Errorf("adding modules_ids env var: %w", err)
+	}
+
 	if cfg.MountUverbs {
-		err = addUverbsDevices(logger, specConfig, requestedDevices)
+		err = addUverbsDevices(logger, specConfig)
 		if err != nil {
 			addErrorEnvVar(specConfig, err.Error())
 			return fmt.Errorf("adding uverb devices: %w", err)
@@ -240,5 +248,5 @@ func addErrorEnvVar(spec *specs.Spec, msg string) {
 			return
 		}
 	}
-	addEnvVar(spec, EnvHLRuntimeError, msg)
+	addEnvVar(spec, EnvHLRuntimeError, strconv.Quote(msg))
 }

@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 TAG := $(shell git describe --abbrev=0 --tags --always)
 HASH := $(shell git rev-parse HEAD)
 DATE := $(shell date +%Y-%m-%d.%H:%M:%S)
@@ -25,10 +24,10 @@ RUNTIME_BINARY := habana-container-runtime
 HOOK_BINARY := habana-container-hook
 CLI_BINARY := habana-container-cli
 
-LIB_VERSION := 0.0.1
-PKG_REV := 1
+LIB_NAME := habanalabs-container-runtime
+LIB_VERSION ?= 1.16.0
+PKG_REV ?= 1
 
-TOOLKIT_VERSION := 1.3.0
 GOLANG_VERSION  := 1.21.0
 
 # # Go CI related commands
@@ -37,20 +36,14 @@ build-binary: clean build-runtime build-hook build-cli
 build-runtime:
 	@echo "Building $(RUNTIME_BINARY)"
 	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
-	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
-	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${RUNTIME_BINARY} ./cmd/habana-container-runtime/
 
 build-hook:
 	@echo "Building $(HOOK_BINARY)"
 	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
-	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
-	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${HOOK_BINARY} ./cmd/habana-container-runtime-hook/
 
 build-cli:
 	@echo "Building $(CLI_BINARY)"
 	@CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build  -o dist/linux_amd64/${CLI_BINARY} ./cmd/habana-container-cli/
-	@CGO_ENABLED=0 GOARCH=386 GOOS=linux go build  -o dist/linux_386/${CLI_BINARY} ./cmd/habana-container-cli/
-	@CGO_ENABLED=0 GOARCH=arm64 GOOS=linux go build  -o dist/linux_arm64/${CLI_BINARY} ./cmd/habana-container-cli/
 
 clean:
 	go clean > /dev/null
@@ -93,6 +86,7 @@ release:
 		-e DOCKER_PASSWORD \
 		-e DOCKER_REGISTRY \
 		goreleaser/goreleaser release --clean --snapshot
+
 #######################################
 
 # Supported OSs by architecture
@@ -141,7 +135,7 @@ docker-build-%:
 	    --progress=plain \
 	    --build-arg BASEIMAGE=$(LOCAL_REGISTRY)$(BASEIMAGE) \
 	    --build-arg GOLANG_VERSION="$(GOLANG_VERSION)" \
-	    --build-arg TOOLKIT_VERSION="$(TOOLKIT_VERSION)" \
+	    --build-arg PKG_NAME="$(LIB_NAME)" \
 	    --build-arg PKG_VERS="$(LIB_VERSION)" \
 	    --build-arg PKG_REV="$(PKG_REV)" \
 		--build-arg ARCH=$(ARCH) \

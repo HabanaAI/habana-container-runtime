@@ -44,11 +44,19 @@ func AcceleratorDevices() []string {
 
 // InfinibandDevices finds the related Habanalabs infiniband cards for the accelerators.
 func InfinibandDevices() []string {
-	matches, err := filepath.Glob("/sys/class/infiniband/hlib_*")
+	matches, err := filepath.Glob("/sys/class/infiniband/hbl_*")
 	if err != nil {
 		panic(err)
 	}
 
+	if len(matches) > 0 {
+		return matches
+	}
+
+	matches, err = filepath.Glob("/sys/class/infiniband/hlib_*")
+	if err != nil {
+		panic(err)
+	}
 	return matches
 }
 
@@ -89,6 +97,9 @@ func ExternalInterfaces(absHlibDevicePaths []string) ([]string, error) {
 		netDevDir := fmt.Sprintf("%s/device/net", hlib)
 		devices, err := os.ReadDir(netDevDir)
 		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				return []string{}, nil
+			}
 			return nil, fmt.Errorf("discovering external devices: %v", err)
 		}
 		for _, netDev := range devices {

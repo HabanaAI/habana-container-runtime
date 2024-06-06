@@ -8,6 +8,8 @@ If environment variable `HABANA_VISIBLE_DEVICES` is set in the OCI spec, the hoo
     - [Build from source](#build-from-source)
       - [Build binaries](#build-binaries)
       - [Build package from source](#build-package-from-source)
+        - [Debian package](#debian-package)
+        - [RPM package](#rpm-package)
     - [Install pre-built package](#install-pre-built-package)
       - [Ubuntu distributions](#ubuntu-distributions)
       - [CentOS and Amazon linux distributions](#centos-and-amazon-linux-distributions)
@@ -20,12 +22,14 @@ If environment variable `HABANA_VISIBLE_DEVICES` is set in the OCI spec, the hoo
   - [Usage example](#usage-example)
   - [Environment variables (OCI spec)](#environment-variables-oci-spec)
     - [`HABANA_VISIBLE_DEVICES`](#habana_visible_devices)
-      - [Possible values](#possible-values)
+    - [`HABANA_VISIBLE_MODULES`](#habana_visible_modules)
     - [`HABANA_RUNTIME_ERROR` **Auto generated**](#habana_runtime_error-auto-generated)
   - [Config](#config)
   - [Issues and Contributing](#issues-and-contributing)
 
-## Build from source
+## Installation
+
+### Build from source
 
 All binaries are build under dist/{BINARY_NAME}_architecture/{BINARY_NAME}.
 
@@ -34,7 +38,7 @@ Available architectures:
 - linux_386
 - linux_arm64
 
-### Build binaries
+#### Build binaries
 
 ```bash
 # Build all binaries
@@ -54,7 +58,7 @@ After building the binaries, copy the config from `packaging/config.toml`
 into `/etc/habana-container-runtime/config.toml` and edit for your
 environment.
 
-### Build package from source
+#### Build package from source
 
 You must have docker installed. Building the packages is done using goreleaser.
 
@@ -64,10 +68,28 @@ make release
 
 Artifacts are found under `dist/` folder.
 
-## Install pre-built package
+### Install pre-built package
 
-Installation and usage guides can be found in the [habana.ai docs](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#set-up-container-usage)
+#### Ubuntu distributions
 
+1. download package from https://vault.habana.ai/artifactory/debian/<distribution>/pool/main/h/habanacontainerruntime/habanalabs-container-runtime-<RELEASE>.amd64.deb
+2. Install the `habana-container-runtime.deb` package:
+```
+sudo dpkg -i habana-container-runtime.deb
+```
+
+#### CentOS and Amazon linux distributions
+
+1. download package from https://vault.habana.ai/artifactory/centos/<major>/<version>/<binary_arch>.rpm
+2. Install the `habana-container-runtime.rpm` package:
+
+```bash
+sudo yum install habana-container-runtime.rpm
+```
+
+To register the `habana` runtime, use the method below that is best suited
+to your environment. You might need to merge the new argument with your
+existing configuration.
 
 ## Docker Engine setup
 
@@ -173,6 +195,10 @@ This variable controls which Habana devices will be made accessible inside the c
 * `0,1,2` …: a comma-separated list of index(es).
 * `all`: all Habana devices will be accessible, this is the default value in our container images.
 
+
+### `HABANA_VISIBLE_MODULES` **Auto generated**
+The variable holds the requested accelerators module ids.
+Order does not overlap with the HABANA_VISIBLE_DEVICES order.
 
 ### `HABANA_RUNTIME_ERROR` **Auto generated**
 Variable hold the last error from the runtime flow. The runtime
